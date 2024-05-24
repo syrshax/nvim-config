@@ -161,6 +161,7 @@ require("lazy").setup(
 				-- "3rd/image.nvim", -- Optional image support in preview window: See `# Preview Mode` for more information
 			},
 		},
+		{ "ellisonleao/gruvbox.nvim", priority = 1000, config = true, opts = ... },
 		-- NOTE: Plugins can also be added by using a table,
 		-- with the first argument being the link and the following
 		-- keys can be used to configure plugin behavior/loading/etc.
@@ -728,8 +729,8 @@ require("lazy").setup(
 				-- Load the colorscheme here.
 				-- Like many other themes, this one has different styles, and you could load
 				-- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-				vim.cmd.colorscheme("rose-pine")
-
+				vim.cmd.colorscheme("gruvbox")
+				vim.o.background = "dark"
 				-- You can configure highlights by doing something like:
 				vim.cmd.hi("Comment gui=none")
 			end,
