@@ -146,10 +146,27 @@ vim.keymap.set("n", "<leader>e", "<Cmd>Neotree toggle<CR>")
 vim.keymap.set("n", "<Tab>", "gt")
 require("lazy").setup(
 	{
+
+		"christoomey/vim-tmux-navigator",
+		cmd = {
+			"TmuxNavigateLeft",
+			"TmuxNavigateDown",
+			"TmuxNavigateUp",
+			"TmuxNavigateRight",
+			"TmuxNavigatePrevious",
+		},
+		keys = {
+			{ "<c-h>", "<cmd><C-U>TmuxNavigateLeft<cr>" },
+			{ "<c-j>", "<cmd><C-U>TmuxNavigateDown<cr>" },
+			{ "<c-k>", "<cmd><C-U>TmuxNavigateUp<cr>" },
+			{ "<c-l>", "<cmd><C-U>TmuxNavigateRight<cr>" },
+			{ "<c-\\>", "<cmd><C-U>TmuxNavigatePrevious<cr>" },
+		},
 		-- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
 		"tpope/vim-sleuth", -- Detect tabstop and shiftwidth automatically
 		"MunifTanjim/nui.nvim",
 		"rose-pine/neovim",
+		"lunarvim/horizon.nvim",
 		"zSnails/cityscape.nvim",
 		{
 			"nvim-neo-tree/neo-tree.nvim",
@@ -215,19 +232,7 @@ require("lazy").setup(
 				require("which-key").setup()
 
 				-- Document existing key chains
-				require("which-key").register({
-					["<leader>c"] = { name = "[C]ode", _ = "which_key_ignore" },
-					["<leader>d"] = { name = "[D]ocument", _ = "which_key_ignore" },
-					["<leader>r"] = { name = "[R]ename", _ = "which_key_ignore" },
-					["<leader>s"] = { name = "[S]earch", _ = "which_key_ignore" },
-					["<leader>w"] = { name = "[W]orkspace", _ = "which_key_ignore" },
-					["<leader>t"] = { name = "[T]oggle", _ = "which_key_ignore" },
-					["<leader>h"] = { name = "Git [H]unk", _ = "which_key_ignore" },
-				})
 				-- visual mode
-				require("which-key").register({
-					["<leader>h"] = { "Git [H]unk" },
-				}, { mode = "v" })
 			end,
 		},
 
@@ -730,13 +735,12 @@ require("lazy").setup(
 				-- Load the colorscheme here.
 				-- Like many other themes, this one has different styles, and you could load
 				-- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-				vim.cmd.colorscheme("moonfly")
+				vim.cmd.colorscheme("rose-pine")
 				vim.o.background = "dark"
 				-- You can configure highlights by doing something like:
 				vim.cmd.hi("Comment gui=none")
 			end,
 		},
-
 		-- Highlight todo, notes, etc in comments
 		{
 			"folke/todo-comments.nvim",
