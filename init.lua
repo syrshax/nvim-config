@@ -2,10 +2,12 @@
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
 vim.g.mapleader = " "
+vim.g.python3_host_prog = vim.fn.exepath("python3")
 vim.g.maplocalleader = " "
 vim.opt["tabstop"] = 4
 vim.opt["shiftwidth"] = 4
 vim.opt.colorcolumn = "99"
+vim.opt.signcolumn = "yes"
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
 vim.g.have_nerd_font = true
@@ -14,6 +16,7 @@ vim.g.have_nerd_font = true
 -- See `:help vim.opt`
 -- NOTE: You can change these options as you wish!
 --  For more options, you can see `:help option-list`
+--
 
 -- Make line numbers default
 vim.opt.number = true
@@ -69,11 +72,10 @@ vim.opt.inccommand = "split"
 vim.opt.cursorline = true
 
 -- Minimal number of screen lines to keep above and below the cursor.
-vim.opt.scrolloff = 15
+vim.opt.scrolloff = 25
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
-
 -- Set highlight on search, but clear on pressing <Esc> in normal mode hgahjsdahsjdashd
 vim.opt.hlsearch = true
 vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
@@ -146,7 +148,6 @@ vim.keymap.set("n", "<leader>e", "<Cmd>Neotree toggle<CR>")
 vim.keymap.set("n", "<Tab>", "gt")
 require("lazy").setup(
 	{
-
 		"christoomey/vim-tmux-navigator",
 		cmd = {
 			"TmuxNavigateLeft",
@@ -165,9 +166,254 @@ require("lazy").setup(
 		-- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
 		"tpope/vim-sleuth", -- Detect tabstop and shiftwidth automatically
 		"MunifTanjim/nui.nvim",
-		"rose-pine/neovim",
+		{
+			"rose-pine/neovim",
+			name = "rose-pine",
+			config = function()
+				require("rose-pine").setup({
+					variant = "auto", -- auto, main, moon, or dawn
+					dark_variant = "main", -- main, moon, or dawn
+					dim_inactive_windows = false,
+					extend_background_behind_borders = true,
+
+					enable = {
+						terminal = true,
+						legacy_highlights = true, -- Improve compatibility for previous versions of Neovim
+						migrations = true, -- Handle deprecated options automatically
+					},
+
+					styles = {
+						bold = true,
+						italic = true,
+						transparency = false,
+					},
+
+					groups = {
+						border = "muted",
+						link = "iris",
+						panel = "surface",
+
+						error = "love",
+						hint = "iris",
+						info = "foam",
+						note = "pine",
+						todo = "rose",
+						warn = "gold",
+
+						git_add = "foam",
+						git_change = "rose",
+						git_delete = "love",
+						git_dirty = "rose",
+						git_ignore = "muted",
+						git_merge = "iris",
+						git_rename = "pine",
+						git_stage = "iris",
+						git_text = "rose",
+						git_untracked = "subtle",
+
+						h1 = "iris",
+						h2 = "foam",
+						h3 = "rose",
+						h4 = "gold",
+						h5 = "pine",
+						h6 = "foam",
+					},
+
+					palette = {
+						-- Override the builtin palette per variant
+						-- moon = {
+						--     base = '#18191a',
+						--     overlay = '#363738',
+						-- },
+					},
+
+					highlight_groups = {
+						GitSignsCurrentLineBlame = { fg = "subtle", bg = "none" }, -- Add this line
+						-- Comment = { fg = "foam" },
+						-- VertSplit = { fg = "muted", bg = "muted" },
+					},
+
+					before_highlight = function(group, highlight, palette)
+						-- Disable all undercurls
+						-- if highlight.undercurl then
+						--     highlight.undercurl = false
+						-- end
+						--
+						-- Change palette colour
+						-- if highlight.fg == palette.pine then
+						--     highlight.fg = palette.foam
+						-- end
+					end,
+				})
+				-- vim.cmd("colorscheme rose-pine-main")
+				-- vim.cmd("colorscheme rose-pine-moon")
+				-- vim.cmd("colorscheme rose-pine-dawn")
+			end,
+		},
+		{ "catppuccin/nvim", name = "catppuccin", priority = 1000 },
+		"EdenEast/nightfox.nvim",
+		"sainnhe/everforest",
+		"ntk148v/komau.vim",
 		"lunarvim/horizon.nvim",
 		"zSnails/cityscape.nvim",
+		{
+			"nvim-neotest/neotest",
+			dependencies = {
+				"nvim-neotest/nvim-nio",
+				"nvim-lua/plenary.nvim",
+				"antoinemadec/FixCursorHold.nvim",
+				"nvim-treesitter/nvim-treesitter",
+				"nvim-neotest/neotest-python",
+			},
+			config = function()
+				local neotest = require("neotest")
+
+				-- Define custom signs with larger text
+				local signs = {
+					passed = {
+						text = "✔", -- You can use "✔" for an alternative check mark
+						texthl = "NeotestPassed",
+						numhl = "NeotestPassed",
+					},
+					failed = {
+						text = "✗",
+						texthl = "NeotestFailed",
+						numhl = "NeotestFailed",
+					},
+					running = {
+						text = "⟳",
+						texthl = "NeotestRunning",
+						numhl = "NeotestRunning",
+					},
+					skipped = {
+						text = "○",
+						texthl = "NeotestSkipped",
+						numhl = "NeotestSkipped",
+					},
+				}
+
+				-- Register the signs
+				for name, sign in pairs(signs) do
+					vim.fn.sign_define("neotest_" .. name, sign)
+				end
+
+				neotest.setup({
+					adapters = {
+						require("neotest-python")({
+							runner = "pytest",
+							args = { "--verbose" },
+							python = function()
+								if vim.fn.executable("poetry") == 1 then
+									return vim.fn.trim(vim.fn.system("poetry env info -p")) .. "/bin/python"
+								elseif vim.fn.executable("poe") == 1 then
+									return vim.fn.expand("$VIRTUAL_ENV/bin/python")
+								else
+									return vim.fn.exepath("python3") or vim.fn.exepath("python")
+								end
+							end,
+						}),
+					},
+					output = {
+						enabled = true,
+						open_on_run = false,
+					},
+					status = {
+						enabled = true,
+						virtual_text = true,
+						signs = true,
+					},
+					summary = {
+						enabled = true,
+						expand_errors = true,
+						follow = true,
+						mappings = {
+							expand = { "<CR>", "<2-LeftMouse>" },
+							expand_all = "e",
+							output = "o",
+							short = "O",
+							run = "r",
+							run_marked = "R",
+							clear_marked = "c",
+							jumpto = "i",
+							stop = "u",
+							mark = "m",
+							debug = "d",
+						},
+					},
+					floating = {
+						border = "rounded",
+						max_height = 0.9,
+						max_width = 0.7,
+						options = {},
+					},
+					-- Add highlight configuration
+					highlights = {
+						passed = "String", -- Green color for passed tests
+						failed = "DiagnosticError", -- Red color for failed tests
+						running = "Special", -- Blue color for running tests
+						skipped = "Comment", -- Gray color for skipped tests
+					},
+				})
+
+				-- Rest of your keymaps remain the same
+				local function open_output_panel()
+					vim.schedule(function()
+						neotest.output_panel.toggle()
+					end)
+				end
+
+				vim.keymap.set("n", "<leader>tt", function()
+					neotest.run.run(vim.fn.expand("%"))
+					open_output_panel()
+				end, { desc = "Run File" })
+				vim.keymap.set("n", "<leader>tT", function()
+					neotest.run.run(vim.loop.cwd())
+					open_output_panel()
+				end, { desc = "Run All Test Files" })
+				vim.keymap.set("n", "<leader>tr", function()
+					neotest.run.run()
+					open_output_panel()
+				end, { desc = "Run Nearest" })
+				vim.keymap.set("n", "<leader>ts", function()
+					neotest.summary.toggle()
+				end, { desc = "Toggle Summary" })
+				vim.keymap.set("n", "<leader>to", function()
+					vim.schedule(function()
+						neotest.output.open({ enter = true })
+					end)
+				end, { desc = "Show Output" })
+				vim.keymap.set("n", "<leader>tO", function()
+					open_output_panel()
+				end, { desc = "Toggle Output Panel" })
+				vim.keymap.set("n", "<leader>tS", function()
+					neotest.run.stop()
+				end, { desc = "Stop" })
+				vim.keymap.set("n", "[t", function()
+					neotest.jump.prev({ status = "failed" })
+				end, { desc = "Previous Failed Test" })
+				vim.keymap.set("n", "]t", function()
+					neotest.jump.next({ status = "failed" })
+				end, { desc = "Next Failed Test" })
+			end,
+		},
+		{
+			"rcarriga/nvim-dap-ui",
+			dependencies = {
+				"mfussenegger/nvim-dap",
+				"mfussenegger/nvim-dap-python",
+				"nvim-neotest/nvim-nio",
+			},
+			config = function()
+				require("custom.dap").setup()
+			end,
+		},
+		{
+			"lukas-reineke/indent-blankline.nvim",
+			main = "ibl",
+			---@module "ibl"
+			---@type ibl.config
+			opts = {},
+		},
 		{
 			"nvim-neo-tree/neo-tree.nvim",
 			branch = "v3.x",
@@ -207,6 +453,8 @@ require("lazy").setup(
 					topdelete = { text = "‾" },
 					changedelete = { text = "~" },
 				},
+				auto_attach = true,
+				current_line_blame = true,
 			},
 		},
 
@@ -224,6 +472,7 @@ require("lazy").setup(
 		-- Then, because we use the `config` key, the configuration only runs
 		-- after the plugin has been loaded:
 		--  config = function() ... end
+		--
 
 		{ -- Useful plugin to show you pending keybinds.
 			"folke/which-key.nvim",
@@ -515,30 +764,66 @@ require("lazy").setup(
 				--  - settings (table): Override the default settings passed when initializing the server.
 				--        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
 				local servers = {
-					-- clangd = {},
-					-- gopls = {},
-					-- pyright = {},
-					-- rust_analyzer = {},
-					-- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
-					--
-					-- Some languages (like typescript) have entire language plugins that can be useful:
-					--    https://github.com/pmizio/typescript-tools.nvim
-					--
-					-- But for many setups, the LSP (`tsserver`) will work just fine
-					-- tsserver = {},
-					--
-
+					pyright = {
+						settings = {
+							pyright = {
+								autoImportCompletion = true,
+								-- Add these settings for better import discovery
+								disableOrganizeImports = false,
+							},
+							python = {
+								analysis = {
+									autoSearchPaths = true,
+									diagnosticMode = "workspace", -- Changed from 'openFilesOnly' to analyze the whole workspace
+									useLibraryCodeForTypes = true,
+									typeCheckingMode = "off",
+									-- Add these settings for better completion and analysis
+									indexing = true,
+									inlayHints = {
+										variableTypes = true,
+										functionReturnTypes = true,
+									},
+									-- Enhance auto-import and completion features
+									importFormat = "absolute",
+									stubPath = "typings",
+									extraPaths = {}, -- Add any additional paths you want Pyright to search
+									diagnosticSeverityOverrides = {
+										reportMissingImports = "none", -- Adjust if you want to see missing imports
+										reportMissingModuleSource = "none",
+									},
+									-- Improve workspace symbol finding
+									workspaceSymbols = true,
+									-- Complete all members
+									completeFunctionParens = true,
+								},
+							},
+						},
+						-- Add custom file watching pattern if needed
+						filetypes = { "python" },
+						flags = {
+							debounce_text_changes = 150,
+						},
+						-- Add root_dir configuration to help Pyright find your project root
+						root_dir = function(fname)
+							local util = require("lspconfig.util")
+							-- Detect root directory by looking for common Python project files
+							return util.root_pattern(
+								"pyproject.toml",
+								"setup.py",
+								"setup.cfg",
+								"requirements.txt",
+								"Pipfile",
+								"pyrightconfig.json"
+							)(fname) or util.find_git_ancestor(fname) or util.path.dirname(fname)
+						end,
+					},
+					-- Your other LSP servers configuration...
 					lua_ls = {
-						-- cmd = {...},
-						-- filetypes = { ...},
-						-- capabilities = {},
 						settings = {
 							Lua = {
 								completion = {
 									callSnippet = "Replace",
 								},
-								-- You can toggle below to ignore Lua_LS's noisy `missing-fields` warnings
-								-- diagnostics = { disable = { 'missing-fields' } },
 							},
 						},
 					},
@@ -559,14 +844,13 @@ require("lazy").setup(
 					"stylua", -- Used to format Lua code
 				})
 				require("mason-tool-installer").setup({ ensure_installed = ensure_installed })
+				local capabilities = vim.lsp.protocol.make_client_capabilities()
+				capabilities = require("cmp_nvim_lsp").default_capabilities(capabilities)
 
 				require("mason-lspconfig").setup({
 					handlers = {
 						function(server_name)
 							local server = servers[server_name] or {}
-							-- This handles overriding only values explicitly passed
-							-- by the server configuration above. Useful when disabling
-							-- certain features of an LSP (for example, turning off formatting for tsserver)
 							server.capabilities =
 								vim.tbl_deep_extend("force", {}, capabilities, server.capabilities or {})
 							require("lspconfig")[server_name].setup(server)
@@ -738,7 +1022,7 @@ require("lazy").setup(
 				vim.cmd.colorscheme("rose-pine")
 				vim.o.background = "dark"
 				-- You can configure highlights by doing something like:
-				vim.cmd.hi("Comment gui=none")
+				vim.cmd.hi("Comment gui=bold,italic") -- Both bold and italic
 			end,
 		},
 		-- Highlight todo, notes, etc in comments
@@ -790,7 +1074,7 @@ require("lazy").setup(
 			"nvim-treesitter/nvim-treesitter",
 			build = ":TSUpdate",
 			opts = {
-				ensure_installed = { "bash", "c", "html", "lua", "luadoc", "markdown", "vim", "vimdoc" },
+				ensure_installed = { "bash", "c", "html", "lua", "luadoc", "markdown", "vim", "vimdoc", "python" },
 				-- Autoinstall languages that are not installed
 				auto_install = true,
 				highlight = {
@@ -816,6 +1100,43 @@ require("lazy").setup(
 				--    - Incremental selection: Included, see `:help nvim-treesitter-incremental-selection-mod`
 				--    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
 				--    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
+			end,
+		},
+		{
+			"kdheepak/lazygit.nvim",
+			dependencies = {
+				"nvim-lua/plenary.nvim",
+			},
+			config = function()
+				-- Configuration for lazygit.nvim
+				vim.g.lazygit_floating_window_winblend = 0 -- transparency of floating window
+				vim.g.lazygit_floating_window_scaling_factor = 0.9 -- scaling factor for floating window
+				vim.g.lazygit_floating_window_border_chars = { "╭", "─", "╮", "│", "╯", "─", "╰", "│" } -- customize lazygit popup window border characters
+				vim.g.lazygit_use_neovim_remote = 1 -- fallback to 0 if neovim-remote is not installed
+
+				-- Key mappings for LazyGit
+				vim.keymap.set("n", "<leader>gg", ":LazyGit<CR>", { silent = true, desc = "Open LazyGit" })
+				-- Open LazyGit in current file's directory
+				vim.keymap.set(
+					"n",
+					"<leader>gf",
+					":LazyGitCurrentFile<CR>",
+					{ silent = true, desc = "LazyGit Current File" }
+				)
+				-- Show Git file history
+				vim.keymap.set(
+					"n",
+					"<leader>gh",
+					":LazyGitFilter<CR>",
+					{ silent = true, desc = "LazyGit File History" }
+				)
+				-- Show Git commits of current file
+				vim.keymap.set(
+					"n",
+					"<leader>gc",
+					":LazyGitFilterCurrentFile<CR>",
+					{ silent = true, desc = "LazyGit Current File History" }
+				)
 			end,
 		},
 	},
