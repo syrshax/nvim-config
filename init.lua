@@ -9,6 +9,19 @@ vim.opt["shiftwidth"] = 4
 vim.opt.colorcolumn = "99"
 vim.opt.signcolumn = "yes"
 
+vim.api.nvim_create_autocmd("FileType", {
+	desc = "Comprehensively reformat Python with Ruff",
+	pattern = "python",
+	callback = function()
+		vim.keymap.set("n", "<leader>fF", function()
+			vim.lsp.buf.code_action({
+				context = { only = { "source.fixAll" }, diagnostics = {} },
+				apply = true,
+			})
+			vim.lsp.buf.format({ async = true })
+		end, { desc = "Format buffer" })
+	end,
+})
 -- Set to true if you have a Nerd Font installed and selected in the terminal
 vim.g.have_nerd_font = true
 
@@ -267,11 +280,10 @@ require("lazy").setup(
 			},
 			config = function()
 				local neotest = require("neotest")
-
 				-- Define custom signs with larger text
 				local signs = {
 					passed = {
-						text = "✔", -- You can use "✔" for an alternative check mark
+						text = "✔",
 						texthl = "NeotestPassed",
 						numhl = "NeotestPassed",
 					},
@@ -291,12 +303,10 @@ require("lazy").setup(
 						numhl = "NeotestSkipped",
 					},
 				}
-
 				-- Register the signs
 				for name, sign in pairs(signs) do
 					vim.fn.sign_define("neotest_" .. name, sign)
 				end
-
 				neotest.setup({
 					adapters = {
 						require("neotest-python")({
@@ -315,7 +325,11 @@ require("lazy").setup(
 					},
 					output = {
 						enabled = true,
-						open_on_run = false,
+						open_on_run = true,
+					},
+					output_panel = {
+						enabled = true, -- Disable the output panel by default
+						open_on_run = false, -- Ensure it doesn't open on run
 					},
 					status = {
 						enabled = true,
@@ -346,51 +360,58 @@ require("lazy").setup(
 						max_width = 0.7,
 						options = {},
 					},
-					-- Add highlight configuration
 					highlights = {
-						passed = "String", -- Green color for passed tests
-						failed = "DiagnosticError", -- Red color for failed tests
-						running = "Special", -- Blue color for running tests
-						skipped = "Comment", -- Gray color for skipped tests
+						passed = "String",
+						failed = "DiagnosticError",
+						running = "Special",
+						skipped = "Comment",
 					},
 				})
 
-				-- Rest of your keymaps remain the same
-				local function open_output_panel()
+				-- Modified function to use floating window instead of output panel
+				local function show_test_output()
 					vim.schedule(function()
-						neotest.output_panel.toggle()
+						neotest.output.open({ enter = true, auto_close = true })
 					end)
 				end
 
 				vim.keymap.set("n", "<leader>tt", function()
 					neotest.run.run(vim.fn.expand("%"))
-					open_output_panel()
+					show_test_output()
 				end, { desc = "Run File" })
+
 				vim.keymap.set("n", "<leader>tT", function()
 					neotest.run.run(vim.loop.cwd())
-					open_output_panel()
+					show_test_output()
 				end, { desc = "Run All Test Files" })
+
 				vim.keymap.set("n", "<leader>tr", function()
 					neotest.run.run()
-					open_output_panel()
+					show_test_output()
 				end, { desc = "Run Nearest" })
+
 				vim.keymap.set("n", "<leader>ts", function()
 					neotest.summary.toggle()
 				end, { desc = "Toggle Summary" })
+
 				vim.keymap.set("n", "<leader>to", function()
 					vim.schedule(function()
 						neotest.output.open({ enter = true })
 					end)
 				end, { desc = "Show Output" })
+
 				vim.keymap.set("n", "<leader>tO", function()
-					open_output_panel()
+					neotest.output_panel.toggle()
 				end, { desc = "Toggle Output Panel" })
+
 				vim.keymap.set("n", "<leader>tS", function()
 					neotest.run.stop()
 				end, { desc = "Stop" })
+
 				vim.keymap.set("n", "[t", function()
 					neotest.jump.prev({ status = "failed" })
 				end, { desc = "Previous Failed Test" })
+
 				vim.keymap.set("n", "]t", function()
 					neotest.jump.next({ status = "failed" })
 				end, { desc = "Next Failed Test" })
@@ -1019,8 +1040,8 @@ require("lazy").setup(
 				-- Load the colorscheme here.
 				-- Like many other themes, this one has different styles, and you could load
 				-- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-				vim.cmd.colorscheme("rose-pine")
-				vim.o.background = "dark"
+				vim.cmd.colorscheme("gruvbox")
+				vim.o.background = "light"
 				-- You can configure highlights by doing something like:
 				vim.cmd.hi("Comment gui=bold,italic") -- Both bold and italic
 			end,
